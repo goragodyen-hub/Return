@@ -583,7 +583,7 @@ window.closeSyncModal = function() {
 function getSelectedNotes() {
   const notes = [];
   if (document.getElementById('chkNoteEmpty').checked) {
-    notes.push('หมึกหมด');
+    notes.push('ตลับเปล่า');
   }
   if (document.getElementById('chkNoteProblem').checked) {
     notes.push('หมึกมีปัญหา');
