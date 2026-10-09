@@ -1643,54 +1643,97 @@ body {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 12mm 15mm;
+    margin: 8mm 10mm;
   }
-  body {
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
   }
-  body * {
-    visibility: hidden;
-  }
-  .print-slip, .print-slip *,
-  .formal-report-paper, .formal-report-paper * {
-    visibility: visible;
-  }
-  .print-slip, .formal-report-paper {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    background: #ffffff !important;
-  }
-  .no-print, .report-filter-toolbar, .modal-header, .modal-footer, .app-header {
+
+  /* Completely remove background UI from print layout flow to eliminate blank pages */
+  .app-header,
+  .main-content,
+  #syncModal,
+  #printModal,
+  #toast,
+  .no-print,
+  .report-filter-toolbar,
+  .modal-header,
+  .modal-footer {
     display: none !important;
   }
-  .modal-backdrop {
+
+  /* Formal A4 Report Container takes over full page in normal document flow */
+  #formalReportModal {
+    display: block !important;
     position: static !important;
-    background: none !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
     padding: 0 !important;
-  }
-  .modal-container {
-    box-shadow: none !important;
+    background: transparent !important;
     border: none !important;
-    background: none !important;
-    max-width: 100% !important;
-    padding: 0 !important;
+    box-shadow: none !important;
+    z-index: auto !important;
   }
-  .report-paper-wrapper {
-    background: none !important;
+
+  .report-modal-container {
+    display: block !important;
+    position: static !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
     padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .report-modal-container .modal-body {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .report-paper-wrapper {
+    display: block !important;
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
     max-height: none !important;
     overflow: visible !important;
   }
+
+  .formal-report-paper {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
   .report-table tr {
-    page-break-inside: avoid;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .report-signatures-grid,
+  .report-sig-box {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
 
@@ -1764,7 +1807,7 @@ body {
   width: 100%;
   max-width: 210mm;
   min-height: 297mm;
-  padding: 18mm 20mm;
+  padding: 10mm 14mm;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   font-family: 'Prompt', 'Plus Jakarta Sans', sans-serif;
   box-sizing: border-box;
@@ -1773,46 +1816,48 @@ body {
 
 .report-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  border-bottom: 2.5px solid #e11d48;
-  padding-bottom: 12px;
-  margin-bottom: 16px;
+  border-bottom: 2px solid #e11d48;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .report-header-brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .report-header-logo {
-  height: 40px;
+  height: 36px;
   width: auto;
   object-fit: contain;
 }
 
 .report-header-title h2 {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: #0f172a;
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .report-header-title .sub {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.5px;
   color: #e11d48;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .report-header-meta {
   text-align: right;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   color: #475569;
-  line-height: 1.5;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .report-header-meta strong {
@@ -1823,52 +1868,53 @@ body {
 .report-cmyk-summary-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-  margin-bottom: 18px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .report-cmyk-box {
-  border-radius: 6px;
-  padding: 8px 10px;
+  border-radius: 5px;
+  padding: 5px 6px;
   text-align: center;
   border: 1px solid #cbd5e1;
   background: #f8fafc;
 }
 
-.report-cmyk-box.c-box { border-top: 4px solid #0891b2; background: rgba(8, 145, 178, 0.05); }
-.report-cmyk-box.m-box { border-top: 4px solid #db2777; background: rgba(219, 39, 119, 0.05); }
-.report-cmyk-box.y-box { border-top: 4px solid #d97706; background: rgba(217, 119, 6, 0.05); }
-.report-cmyk-box.k-box { border-top: 4px solid #1e293b; background: rgba(30, 41, 59, 0.05); }
-.report-cmyk-box.tot-box { border-top: 4px solid #e11d48; background: rgba(225, 29, 72, 0.08); }
+.report-cmyk-box.c-box { border-top: 3.5px solid #0891b2; background: rgba(8, 145, 178, 0.05); }
+.report-cmyk-box.m-box { border-top: 3.5px solid #db2777; background: rgba(219, 39, 119, 0.05); }
+.report-cmyk-box.y-box { border-top: 3.5px solid #d97706; background: rgba(217, 119, 6, 0.05); }
+.report-cmyk-box.k-box { border-top: 3.5px solid #1e293b; background: rgba(30, 41, 59, 0.05); }
+.report-cmyk-box.tot-box { border-top: 3.5px solid #e11d48; background: rgba(225, 29, 72, 0.08); }
 
 .report-cmyk-box .box-label {
-  font-size: 0.75rem;
+  font-size: 0.70rem;
   font-weight: 700;
   color: #475569;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .report-cmyk-box .box-value {
-  font-size: 1.35rem;
+  font-size: 1.18rem;
   font-weight: 800;
   color: #0f172a;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .report-cmyk-box .box-value span {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: normal;
   color: #64748b;
 }
 
 /* Report Section Headings */
 .report-section-heading {
-  font-size: 0.88rem;
+  font-size: 0.80rem;
   font-weight: 700;
   color: #1e293b;
   border-left: 3.5px solid #e11d48;
-  padding-left: 8px;
-  margin: 14px 0 8px 0;
+  padding-left: 6px;
+  margin: 7px 0 4px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1878,14 +1924,14 @@ body {
 .report-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.78rem;
-  margin-bottom: 14px;
+  font-size: 0.72rem;
+  margin-bottom: 7px;
 }
 
 .report-table th, .report-table td {
   border: 1px solid #cbd5e1;
-  padding: 5px 7px;
-  line-height: 1.35;
+  padding: 3.5px 5px;
+  line-height: 1.25;
 }
 
 .report-table th {
@@ -1899,24 +1945,25 @@ body {
   background: #f8fafc;
 }
 
-.report-table .th-num { width: 32px; }
-.report-table .th-date { width: 80px; }
-.report-table .th-color { width: 35px; }
-.report-table .th-total { width: 55px; font-weight: 700; }
+.report-table .th-num { width: 28px; }
+.report-table .th-date { width: 72px; }
+.report-table .th-color { width: 32px; }
+.report-table .th-total { width: 50px; font-weight: 700; }
 
 .report-table tfoot td {
   background: #e2e8f0;
   font-weight: 800;
-  border-top: 2px solid #94a3b8;
+  border-top: 1.5px solid #94a3b8;
+  padding: 3.5px 5px;
 }
 
 /* Report Signatures */
 .report-endorsement-notice {
-  font-size: 0.76rem;
+  font-size: 0.70rem;
   color: #475569;
   font-style: italic;
-  margin-top: 10px;
-  padding: 6px 10px;
+  margin-top: 6px;
+  padding: 4px 8px;
   background: #f8fafc;
   border-radius: 4px;
   border: 1px dashed #cbd5e1;
@@ -1925,36 +1972,40 @@ body {
 .report-signatures-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  margin-top: 25px;
+  gap: 10px;
+  margin-top: 10px;
   text-align: center;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
 }
 
 .report-sig-box {
-  padding: 6px;
+  padding: 4px;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
 }
 
 .report-sig-line {
   border-bottom: 1px dotted #64748b;
-  height: 38px;
-  margin-bottom: 6px;
+  height: 26px;
+  margin-bottom: 4px;
 }
 
 .report-sig-name {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: #0f172a;
 }
 
 .report-sig-title {
-  font-size: 0.74rem;
+  font-size: 0.70rem;
   color: #64748b;
 }
 
 .report-sig-date {
-  font-size: 0.74rem;
+  font-size: 0.70rem;
   color: #94a3b8;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 /* Responsive */

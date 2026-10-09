@@ -1577,8 +1577,8 @@ function renderFormalReportPaper(records, filterCriteria = {}) {
     if (prepInput && prepInput.value.trim()) {
       sigPrepEl.textContent = prepInput.value.trim();
     } else {
-      const defaultReturner = records.find(r => r.returner)?.returner || 'เจ้าหน้าที่ธุรการ / พัสดุ';
-      sigPrepEl.textContent = defaultReturner;
+      const defaultReturner = records.find(r => r.returner && r.returner.trim() !== '-' && r.returner.trim() !== '')?.returner;
+      sigPrepEl.textContent = defaultReturner || '...................................................';
     }
   }
 
@@ -1594,8 +1594,8 @@ function renderFormalReportPaper(records, filterCriteria = {}) {
     if (receiverInput && receiverInput.value.trim()) {
       sigRecvEl.textContent = receiverInput.value.trim();
     } else {
-      const defaultReceiver = records.find(r => r.receiver)?.receiver || 'เจ้าหน้าที่ Ricoh (Thailand)';
-      sigRecvEl.textContent = defaultReceiver;
+      const defaultReceiver = records.find(r => r.receiver && r.receiver.trim() !== '-' && r.receiver.trim() !== '')?.receiver;
+      sigRecvEl.textContent = defaultReceiver || '...................................................';
     }
   }
 }
