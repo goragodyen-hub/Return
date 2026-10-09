@@ -457,6 +457,9 @@
               <button class="btn btn-secondary btn-sm" id="btnSyncFromSheets" title="ซิงค์ดึงข้อมูลล่าสุดจาก Google Sheets">
                 <i class="fa-solid fa-arrows-rotate"></i> ซิงค์ Sheet
               </button>
+              <button class="btn btn-primary btn-sm" id="btnOpenFormalReport" title="ออกรายงานสรุปส่งคืนหมึกทางการ (A4 / PDF)">
+                <i class="fa-solid fa-file-contract"></i> ออกรายงานทางการ (A4)
+              </button>
               <button class="btn btn-export-excel" id="btnExportExcel" title="ส่งออกเป็นไฟล์ Excel (.xlsx)">
                 <i class="fa-solid fa-file-excel"></i> ส่งออก Excel
               </button>
@@ -521,8 +524,11 @@
 
           <!-- Room / Dept Distribution Card -->
           <div class="card">
-            <div class="card-header">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
               <h3 class="card-title"><i class="fa-solid fa-building"></i> สรุปยอดการคืนหมึกแยกตามห้อง / แผนก</h3>
+              <button class="btn btn-primary btn-sm" id="btnOpenFormalReportFromAnalytics" title="ออกรายงานสรุปส่งคืนหมึกทางการ (A4 / PDF)">
+                <i class="fa-solid fa-file-contract"></i> ออกรายงานทางการ (A4)
+              </button>
             </div>
             <div class="table-responsive">
               <table class="data-table summary-table" id="roomSummaryTable">
@@ -710,6 +716,211 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeSyncModal()">ปิด</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: รายงานสรุปส่งคืนหมึกทางการ A4 (Formal A4 Report Modal) -->
+    <div class="modal-backdrop" id="formalReportModal" style="display: none;">
+      <div class="modal-container report-modal-container">
+        <div class="modal-header no-print">
+          <h3 class="modal-title"><i class="fa-solid fa-file-contract"></i> รายงานสรุปการส่งมอบคืนตลับหมึก Ricoh (A4 / PDF)</h3>
+          <button class="modal-close" onclick="closeFormalReportModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <div class="modal-body" style="padding: 1.2rem;">
+          <!-- Filter Controls Toolbar (Hidden when printing) -->
+          <div class="report-filter-toolbar no-print">
+            <div class="report-filter-row">
+              <label><i class="fa-regular fa-calendar"></i> ตั้งแต่วันที่:</label>
+              <input type="date" id="reportDateFrom">
+              
+              <label>ถึงวันที่:</label>
+              <input type="date" id="reportDateTo">
+
+              <label><i class="fa-solid fa-building"></i> ห้อง / แผนก:</label>
+              <select id="reportRoomFilter">
+                <option value="">ทุกห้อง / แผนก</option>
+              </select>
+
+              <button type="button" class="btn btn-secondary btn-sm" id="btnReportFilterApply">
+                <i class="fa-solid fa-filter"></i> กรองรายงาน
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnReportFilterReset">
+                <i class="fa-solid fa-rotate-left"></i> แสดงทั้งหมด
+              </button>
+            </div>
+
+            <div class="report-filter-row" style="border-top: 1px dashed var(--border-subtle); padding-top: 0.6rem;">
+              <label><i class="fa-solid fa-file-signature"></i> ผู้จัดทำรายงาน:</label>
+              <input type="text" id="reportPreparerInput" placeholder="ระบุชื่อผู้จัดทำ (หรือเว้นว่างเพื่อเซ็นสด)" style="flex: 1; min-width: 160px;">
+
+              <label><i class="fa-solid fa-user-pen"></i> ผู้ส่งมอบ:</label>
+              <input type="text" id="reportSenderInput" placeholder="ระบุชื่อผู้ส่งมอบ (หรือเว้นว่างเพื่อเซ็นสด)" style="flex: 1; min-width: 160px;">
+
+              <label><i class="fa-solid fa-user-check"></i> ตัวแทน Ricoh ผู้รับมอบ:</label>
+              <input type="text" id="reportReceiverInput" placeholder="ระบุชื่อตัวแทน Ricoh (หรือเว้นว่างเพื่อเซ็นสด)" style="flex: 1; min-width: 160px;">
+            </div>
+
+            <div class="report-actions-row">
+              <span id="reportFilterSummaryText" style="font-size: 0.85rem; color: var(--text-muted);">
+                สรุปข้อมูลทั้งหมด <strong id="reportFilteredCount" style="color: var(--ricoh-red);">0</strong> รายการ
+              </span>
+              <div style="display: flex; gap: 0.6rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeFormalReportModal()">
+                  ปิดหน้าต่าง
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="window.print()">
+                  <i class="fa-solid fa-print"></i> สั่งพิมพ์รายงาน / บันทึก PDF (A4)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Printable Document Paper (A4) -->
+          <div class="report-paper-wrapper">
+            <div class="formal-report-paper" id="formalReportPaper">
+              
+              <!-- Report Document Header -->
+              <div class="report-header">
+                <div class="report-header-brand">
+                  <img src="Logo.png" alt="Ricoh Logo" class="report-header-logo">
+                  <div class="report-header-title">
+                    <h2>เอกสารสรุปรายการส่งมอบคืนตลับหมึกเครื่องพิมพ์ริโก้</h2>
+                    <div class="sub">RICOH TONER RETURN &amp; HANDOVER SUMMARY REPORT</div>
+                  </div>
+                </div>
+                <div class="report-header-meta">
+                  <div><strong>เลขที่เอกสาร:</strong> <span id="rptDocNo">RP-202610-001</span></div>
+                  <div><strong>วันที่ออกเอกสาร:</strong> <span id="rptIssueDate">09/10/2569</span></div>
+                  <div><strong>ช่วงเวลางวดรายงาน:</strong> <span id="rptPeriod">ทั้งหมด</span></div>
+                </div>
+              </div>
+
+              <!-- Executive CMYK Summary 5-Box Grid -->
+              <div class="report-cmyk-summary-grid">
+                <div class="report-cmyk-box c-box">
+                  <div class="box-label">Cyan (ฟ้า - C)</div>
+                  <div class="box-value"><span id="rptCountC">0</span> <span>ตลับ</span></div>
+                </div>
+                <div class="report-cmyk-box m-box">
+                  <div class="box-label">Magenta (แดง - M)</div>
+                  <div class="box-value"><span id="rptCountM">0</span> <span>ตลับ</span></div>
+                </div>
+                <div class="report-cmyk-box y-box">
+                  <div class="box-label">Yellow (เหลือง - Y)</div>
+                  <div class="box-value"><span id="rptCountY">0</span> <span>ตลับ</span></div>
+                </div>
+                <div class="report-cmyk-box k-box">
+                  <div class="box-label">Black (ดำ - K)</div>
+                  <div class="box-value"><span id="rptCountK">0</span> <span>ตลับ</span></div>
+                </div>
+                <div class="report-cmyk-box tot-box">
+                  <div class="box-label">ยอดรวมทุกสี</div>
+                  <div class="box-value"><span id="rptCountTotal" style="color: #e11d48;">0</span> <span>ตลับ</span></div>
+                </div>
+              </div>
+
+              <!-- Section 1: สรุปยอดแยกตามห้อง / แผนก -->
+              <div class="report-section-heading">
+                <span>1. สรุปยอดการส่งคืนหมึกแยกตามห้อง / แผนก (Location Summary)</span>
+                <span style="font-size: 0.76rem; font-weight: normal; color: #64748b;">(หน่วย: ตลับ)</span>
+              </div>
+              <table class="report-table" id="rptRoomTable">
+                <thead>
+                  <tr>
+                    <th>ห้อง / แผนก</th>
+                    <th class="th-color">C</th>
+                    <th class="th-color">M</th>
+                    <th class="th-color">Y</th>
+                    <th class="th-color">K</th>
+                    <th class="th-total">รวมตลับ</th>
+                  </tr>
+                </thead>
+                <tbody id="rptRoomTableBody">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+
+              <!-- Section 2: รายละเอียดรายการส่งคืนหมึกรายรอบ -->
+              <div class="report-section-heading">
+                <span>2. รายละเอียดรายการส่งมอบคืนตลับหมึก (Itemized Return Records)</span>
+                <span style="font-size: 0.76rem; font-weight: normal; color: #64748b;">จำนวน <span id="rptItemsCount">0</span> รายการ</span>
+              </div>
+              <table class="report-table" id="rptItemsTable">
+                <thead>
+                  <tr>
+                    <th class="th-num">#</th>
+                    <th class="th-date">วันที่คืน</th>
+                    <th>Serial เครื่อง</th>
+                    <th>ห้อง / แผนก</th>
+                    <th>รุ่นหมึก</th>
+                    <th class="th-color">C</th>
+                    <th class="th-color">M</th>
+                    <th class="th-color">Y</th>
+                    <th class="th-color">K</th>
+                    <th class="th-total">รวม</th>
+                    <th>ผู้ส่งคืน</th>
+                    <th>หมายเหตุ</th>
+                  </tr>
+                </thead>
+                <tbody id="rptItemsTableBody">
+                  <!-- Injected via JS -->
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="5" class="text-right"><strong>ยอดรวมสุทธิ (Grand Total):</strong></td>
+                    <td class="text-center" id="rptFootC">0</td>
+                    <td class="text-center" id="rptFootM">0</td>
+                    <td class="text-center" id="rptFootY">0</td>
+                    <td class="text-center" id="rptFootK">0</td>
+                    <td class="text-center" id="rptFootTotal" style="color: #e11d48;">0</td>
+                    <td colspan="2">ตลับ</td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              <!-- Endorsement Note -->
+              <div class="report-endorsement-notice">
+                * ข้าพเจ้าขอรับรองว่าได้ดำเนินการตรวจสอบและส่งมอบ-รับมอบตลับหมึกเครื่องพิมพ์ Ricoh ที่ใช้แล้วตามรายละเอียดในเอกสารฉบับนี้ถูกต้องครบถ้วนสมบูรณ์ทุกประการ
+              </div>
+
+              <!-- 3-Column Signatures -->
+              <div class="report-signatures-grid">
+                <div class="report-sig-box">
+                  <div class="report-sig-title">ผู้จัดทำรายงาน / ผู้รวบรวม</div>
+                  <div class="report-sig-line"></div>
+                  <div class="report-sig-name">( <span id="rptSigPreparedName">...................................................</span> )</div>
+                  <div class="report-sig-title">เจ้าหน้าที่ผู้รับผิดชอบ</div>
+                  <div class="report-sig-date">วันที่ ......./......./...........</div>
+                </div>
+
+                <div class="report-sig-box">
+                  <div class="report-sig-title">ผู้มีอำนาจลงนามส่งมอบ</div>
+                  <div class="report-sig-line"></div>
+                  <div class="report-sig-name">( <span id="rptSigSenderName">...................................................</span> )</div>
+                  <div class="report-sig-title">หัวหน้าแผนก / ผู้ส่งมอบ</div>
+                  <div class="report-sig-date">วันที่ ......./......./...........</div>
+                </div>
+
+                <div class="report-sig-box">
+                  <div class="report-sig-title">ตัวแทน บริษัท ริโก้ ผู้รับมอบคืน</div>
+                  <div class="report-sig-line"></div>
+                  <div class="report-sig-name">( <span id="rptSigReceiverName">...................................................</span> )</div>
+                  <div class="report-sig-title">เจ้าหน้าที่ Ricoh (Thailand)</div>
+                  <div class="report-sig-date">วันที่ ......./......./...........</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer no-print">
+          <button class="btn btn-secondary" onclick="closeFormalReportModal()">ปิดหน้าต่าง</button>
+          <button class="btn btn-primary" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> สั่งพิมพ์รายงาน / บันทึก PDF
+          </button>
         </div>
       </div>
     </div>

@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadData();
   setupEventListeners();
   setDefaultDate();
+  initFormalReportModule();
 });
 
 // --------------------------------------------------------------------------
@@ -1263,4 +1264,378 @@ function showToast(msg) {
   setTimeout(() => {
     toast.classList.remove('show');
   }, 3200);
+}
+
+// ==========================================================================
+// Formal A4 Report System (รายงานสรุปส่งคืนหมึกทางการ A4 / PDF)
+// ==========================================================================
+let formalReportFilteredRecords = [];
+
+function initFormalReportModule() {
+  const btn1 = document.getElementById('btnOpenFormalReport');
+  const btn2 = document.getElementById('btnOpenFormalReportFromAnalytics');
+  if (btn1) btn1.addEventListener('click', openFormalReportModal);
+  if (btn2) btn2.addEventListener('click', openFormalReportModal);
+
+  const btnApply = document.getElementById('btnReportFilterApply');
+  const btnReset = document.getElementById('btnReportFilterReset');
+  if (btnApply) btnApply.addEventListener('click', applyFormalReportFilter);
+  if (btnReset) btnReset.addEventListener('click', resetFormalReportFilter);
+
+  // Live input sync for signatures
+  const prepInput = document.getElementById('reportPreparerInput');
+  const senderInput = document.getElementById('reportSenderInput');
+  const receiverInput = document.getElementById('reportReceiverInput');
+
+  if (prepInput) {
+    prepInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      const el = document.getElementById('rptSigPreparedName');
+      if (el) el.textContent = val || '...................................................';
+    });
+  }
+
+  if (senderInput) {
+    senderInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      const el = document.getElementById('rptSigSenderName');
+      if (el) el.textContent = val || '...................................................';
+    });
+  }
+
+  if (receiverInput) {
+    receiverInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      const el = document.getElementById('rptSigReceiverName');
+      if (el) el.textContent = val || '...................................................';
+    });
+  }
+}
+
+function initFormalReportRooms() {
+  const roomSelect = document.getElementById('reportRoomFilter');
+  if (!roomSelect) return;
+
+  const currentVal = roomSelect.value;
+  roomSelect.innerHTML = '<option value="">ทุกห้อง / แผนก</option>';
+
+  const roomSet = new Set(RICOH_MACHINES.map(m => m.room));
+  returnRecords.forEach(r => {
+    if (r.room) roomSet.add(r.room);
+  });
+
+  const sortedRooms = Array.from(roomSet).filter(Boolean).sort();
+  sortedRooms.forEach(room => {
+    const opt = document.createElement('option');
+    opt.value = room;
+    opt.textContent = room;
+    if (room === currentVal) opt.selected = true;
+    roomSelect.appendChild(opt);
+  });
+}
+
+window.openFormalReportModal = function() {
+  initFormalReportRooms();
+
+  const dateFromEl = document.getElementById('reportDateFrom');
+  const dateToEl = document.getElementById('reportDateTo');
+
+  if (returnRecords.length > 0) {
+    const dates = returnRecords
+      .map(r => parseDateForComparison(r.returnDate))
+      .filter(Boolean)
+      .sort();
+
+    if (!dateFromEl.value && dates.length > 0) {
+      dateFromEl.value = dates[0];
+    }
+    if (!dateToEl.value && dates.length > 0) {
+      dateToEl.value = dates[dates.length - 1];
+    }
+  } else {
+    const today = new Date().toISOString().split('T')[0];
+    if (!dateFromEl.value) dateFromEl.value = today;
+    if (!dateToEl.value) dateToEl.value = today;
+  }
+
+  applyFormalReportFilter();
+  document.getElementById('formalReportModal').style.display = 'flex';
+};
+
+window.closeFormalReportModal = function() {
+  document.getElementById('formalReportModal').style.display = 'none';
+};
+
+function applyFormalReportFilter() {
+  const dateFrom = document.getElementById('reportDateFrom')?.value || '';
+  const dateTo = document.getElementById('reportDateTo')?.value || '';
+  const selectedRoom = document.getElementById('reportRoomFilter')?.value || '';
+
+  const parsedFrom = dateFrom ? parseDateForComparison(dateFrom) : null;
+  const parsedTo = dateTo ? parseDateForComparison(dateTo) : null;
+
+  formalReportFilteredRecords = returnRecords.filter(r => {
+    const rDate = parseDateForComparison(r.returnDate);
+    if (parsedFrom && rDate && rDate < parsedFrom) return false;
+    if (parsedTo && rDate && rDate > parsedTo) return false;
+    if (selectedRoom && r.room !== selectedRoom) return false;
+    return true;
+  });
+
+  renderFormalReportPaper(formalReportFilteredRecords, { dateFrom, dateTo, room: selectedRoom });
+}
+
+function resetFormalReportFilter() {
+  const dateFromEl = document.getElementById('reportDateFrom');
+  const dateToEl = document.getElementById('reportDateTo');
+  const roomEl = document.getElementById('reportRoomFilter');
+
+  if (returnRecords.length > 0) {
+    const dates = returnRecords
+      .map(r => parseDateForComparison(r.returnDate))
+      .filter(Boolean)
+      .sort();
+    if (dateFromEl) dateFromEl.value = dates[0] || '';
+    if (dateToEl) dateToEl.value = dates[dates.length - 1] || '';
+  } else {
+    if (dateFromEl) dateFromEl.value = '';
+    if (dateToEl) dateToEl.value = '';
+  }
+  if (roomEl) roomEl.value = '';
+
+  applyFormalReportFilter();
+}
+
+function renderFormalReportPaper(records, filterCriteria = {}) {
+  // 1. Doc No & Thai Dates
+  const now = new Date();
+  const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const dayStr = String(now.getDate()).padStart(2, '0');
+  const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+  const yearThai = now.getFullYear() + 543;
+  const issueDateFormatted = `${dayStr}/${monthStr}/${yearThai}`;
+
+  const docNo = `RP-${yearMonth}-${String(records.length).padStart(3, '0')}`;
+  const docNoEl = document.getElementById('rptDocNo');
+  if (docNoEl) docNoEl.textContent = docNo;
+
+  const issueDateEl = document.getElementById('rptIssueDate');
+  if (issueDateEl) issueDateEl.textContent = issueDateFormatted;
+
+  // Period string
+  let periodStr = 'ทั้งหมด';
+  if (filterCriteria.dateFrom && filterCriteria.dateTo) {
+    if (filterCriteria.dateFrom === filterCriteria.dateTo) {
+      periodStr = formatThaiDisplayDate(filterCriteria.dateFrom);
+    } else {
+      periodStr = `${formatThaiDisplayDate(filterCriteria.dateFrom)} ถึง ${formatThaiDisplayDate(filterCriteria.dateTo)}`;
+    }
+  } else if (filterCriteria.dateFrom) {
+    periodStr = `ตั้งแต่ ${formatThaiDisplayDate(filterCriteria.dateFrom)}`;
+  } else if (filterCriteria.dateTo) {
+    periodStr = `ถึง ${formatThaiDisplayDate(filterCriteria.dateTo)}`;
+  }
+
+  if (filterCriteria.room) {
+    periodStr += ` (เฉพาะห้อง: ${filterCriteria.room})`;
+  }
+
+  const rptPeriodEl = document.getElementById('rptPeriod');
+  if (rptPeriodEl) rptPeriodEl.textContent = periodStr;
+
+  const countEl = document.getElementById('reportFilteredCount');
+  if (countEl) countEl.textContent = records.length;
+
+  // 2. Aggregate CMYK Counts
+  let totalC = 0, totalM = 0, totalY = 0, totalK = 0, totalCartridges = 0;
+  records.forEach(r => {
+    totalC += Number(r.c) || 0;
+    totalM += Number(r.m) || 0;
+    totalY += Number(r.y) || 0;
+    totalK += Number(r.k) || 0;
+    totalCartridges += Number(r.total) || 0;
+  });
+
+  const countCEl = document.getElementById('rptCountC');
+  const countMEl = document.getElementById('rptCountM');
+  const countYEl = document.getElementById('rptCountY');
+  const countKEl = document.getElementById('rptCountK');
+  const countTotEl = document.getElementById('rptCountTotal');
+
+  if (countCEl) countCEl.textContent = totalC.toLocaleString();
+  if (countMEl) countMEl.textContent = totalM.toLocaleString();
+  if (countYEl) countYEl.textContent = totalY.toLocaleString();
+  if (countKEl) countKEl.textContent = totalK.toLocaleString();
+  if (countTotEl) countTotEl.textContent = totalCartridges.toLocaleString();
+
+  // 3. Section 1: Location Summary Table (Group by Room)
+  const roomMap = {};
+  records.forEach(r => {
+    const roomKey = r.room || 'ไม่ระบุห้อง';
+    if (!roomMap[roomKey]) {
+      roomMap[roomKey] = { c: 0, m: 0, y: 0, k: 0, total: 0 };
+    }
+    roomMap[roomKey].c += Number(r.c) || 0;
+    roomMap[roomKey].m += Number(r.m) || 0;
+    roomMap[roomKey].y += Number(r.y) || 0;
+    roomMap[roomKey].k += Number(r.k) || 0;
+    roomMap[roomKey].total += Number(r.total) || 0;
+  });
+
+  const sortedRoomKeys = Object.keys(roomMap).sort((a, b) => roomMap[b].total - roomMap[a].total);
+  const roomTableBody = document.getElementById('rptRoomTableBody');
+  if (roomTableBody) {
+    if (sortedRoomKeys.length === 0) {
+      roomTableBody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; color: #94a3b8; padding: 10px;">ไม่มีข้อมูลตามเงื่อนไขที่เลือก</td>
+        </tr>
+      `;
+    } else {
+      roomTableBody.innerHTML = sortedRoomKeys.map(rm => {
+        const d = roomMap[rm];
+        return `
+          <tr>
+            <td style="font-weight: 600;">${rm}</td>
+            <td style="text-align: center; color: #0891b2;">${d.c || '-'}</td>
+            <td style="text-align: center; color: #db2777;">${d.m || '-'}</td>
+            <td style="text-align: center; color: #d97706;">${d.y || '-'}</td>
+            <td style="text-align: center; color: #1e293b; font-weight: 600;">${d.k || '-'}</td>
+            <td style="text-align: center; font-weight: 700; color: #e11d48; background: #fff1f2;">${d.total}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  // 4. Section 2: Itemized Return Records Table
+  const itemsCountEl = document.getElementById('rptItemsCount');
+  if (itemsCountEl) itemsCountEl.textContent = records.length;
+
+  const itemsTableBody = document.getElementById('rptItemsTableBody');
+  if (itemsTableBody) {
+    if (records.length === 0) {
+      itemsTableBody.innerHTML = `
+        <tr>
+          <td colspan="12" style="text-align: center; color: #94a3b8; padding: 18px;">
+            <i class="fa-solid fa-inbox" style="margin-right: 6px;"></i> ไม่มีรายการส่งคืนในช่วงเวลาหรือเงื่อนไขที่เลือก
+          </td>
+        </tr>
+      `;
+    } else {
+      // Sort chronologically descending
+      const sortedRecords = [...records].sort((a, b) => {
+        const da = parseDateForComparison(a.returnDate) || '';
+        const db = parseDateForComparison(b.returnDate) || '';
+        return db.localeCompare(da);
+      });
+
+      itemsTableBody.innerHTML = sortedRecords.map((r, index) => {
+        return `
+          <tr>
+            <td style="text-align: center; color: #64748b; font-size: 0.72rem;">${index + 1}</td>
+            <td style="white-space: nowrap; font-size: 0.74rem;">${formatThaiShortDate(r.returnDate)}</td>
+            <td style="font-family: monospace; font-size: 0.74rem; font-weight: 600; color: #0284c7;">${r.serial || '-'}</td>
+            <td style="font-size: 0.74rem;">${r.room || '-'}</td>
+            <td style="font-size: 0.72rem; color: #475569;">${r.tonerModel || r.model || '-'}</td>
+            <td style="text-align: center; color: #0891b2;">${r.c > 0 ? r.c : '-'}</td>
+            <td style="text-align: center; color: #db2777;">${r.m > 0 ? r.m : '-'}</td>
+            <td style="text-align: center; color: #d97706;">${r.y > 0 ? r.y : '-'}</td>
+            <td style="text-align: center; color: #1e293b; font-weight: 600;">${r.k > 0 ? r.k : '-'}</td>
+            <td style="text-align: center; font-weight: 700; color: #e11d48; background: #fff1f2;">${r.total}</td>
+            <td style="font-size: 0.74rem;">${r.returner || '-'}</td>
+            <td style="font-size: 0.72rem; color: #64748b; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${r.notes || ''}">${r.notes || '-'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  // Footer Totals
+  const footCEl = document.getElementById('rptFootC');
+  const footMEl = document.getElementById('rptFootM');
+  const footYEl = document.getElementById('rptFootY');
+  const footKEl = document.getElementById('rptFootK');
+  const footTotEl = document.getElementById('rptFootTotal');
+
+  if (footCEl) footCEl.textContent = totalC;
+  if (footMEl) footMEl.textContent = totalM;
+  if (footYEl) footYEl.textContent = totalY;
+  if (footKEl) footKEl.textContent = totalK;
+  if (footTotEl) footTotEl.textContent = totalCartridges;
+
+  // Signatures
+  const prepInput = document.getElementById('reportPreparerInput');
+  const senderInput = document.getElementById('reportSenderInput');
+  const receiverInput = document.getElementById('reportReceiverInput');
+
+  const sigPrepEl = document.getElementById('rptSigPreparedName');
+  const sigSendEl = document.getElementById('rptSigSenderName');
+  const sigRecvEl = document.getElementById('rptSigReceiverName');
+
+  if (sigPrepEl) {
+    if (prepInput && prepInput.value.trim()) {
+      sigPrepEl.textContent = prepInput.value.trim();
+    } else {
+      const defaultReturner = records.find(r => r.returner)?.returner || 'เจ้าหน้าที่ธุรการ / พัสดุ';
+      sigPrepEl.textContent = defaultReturner;
+    }
+  }
+
+  if (sigSendEl) {
+    if (senderInput && senderInput.value.trim()) {
+      sigSendEl.textContent = senderInput.value.trim();
+    } else {
+      sigSendEl.textContent = '...................................................';
+    }
+  }
+
+  if (sigRecvEl) {
+    if (receiverInput && receiverInput.value.trim()) {
+      sigRecvEl.textContent = receiverInput.value.trim();
+    } else {
+      const defaultReceiver = records.find(r => r.receiver)?.receiver || 'เจ้าหน้าที่ Ricoh (Thailand)';
+      sigRecvEl.textContent = defaultReceiver;
+    }
+  }
+}
+
+// --------------------------------------------------------------------------
+// Date Utility Helpers
+// --------------------------------------------------------------------------
+function parseDateForComparison(str) {
+  if (!str) return null;
+  const s = String(str).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return s;
+  }
+  const parts = s.split('/');
+  if (parts.length === 3) {
+    let day = parts[0].padStart(2, '0');
+    let month = parts[1].padStart(2, '0');
+    let year = parseInt(parts[2], 10);
+    if (year > 2400) year -= 543;
+    return `${year}-${month}-${day}`;
+  }
+  return s;
+}
+
+function formatThaiDisplayDate(str) {
+  if (!str) return '-';
+  const iso = parseDateForComparison(str);
+  if (!iso || iso.length < 10) return str;
+  const [y, m, d] = iso.split('-');
+  const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  const monthName = thaiMonths[parseInt(m, 10) - 1] || m;
+  const thaiYear = parseInt(y, 10) + 543;
+  return `${parseInt(d, 10)} ${monthName} ${thaiYear}`;
+}
+
+function formatThaiShortDate(str) {
+  if (!str) return '-';
+  const iso = parseDateForComparison(str);
+  if (!iso || iso.length < 10) return str;
+  const [y, m, d] = iso.split('-');
+  const thaiYearShort = (parseInt(y, 10) + 543).toString().slice(-2);
+  return `${d}/${m}/${thaiYearShort}`;
 }
