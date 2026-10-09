@@ -1284,21 +1284,12 @@ function initFormalReportModule() {
 
   // Live input sync for signatures
   const prepInput = document.getElementById('reportPreparerInput');
-  const senderInput = document.getElementById('reportSenderInput');
   const receiverInput = document.getElementById('reportReceiverInput');
 
   if (prepInput) {
     prepInput.addEventListener('input', (e) => {
       const val = e.target.value.trim();
       const el = document.getElementById('rptSigPreparedName');
-      if (el) el.textContent = val || '...................................................';
-    });
-  }
-
-  if (senderInput) {
-    senderInput.addEventListener('input', (e) => {
-      const val = e.target.value.trim();
-      const el = document.getElementById('rptSigSenderName');
       if (el) el.textContent = val || '...................................................';
     });
   }
@@ -1564,29 +1555,19 @@ function renderFormalReportPaper(records, filterCriteria = {}) {
   if (footKEl) footKEl.textContent = totalK;
   if (footTotEl) footTotEl.textContent = totalCartridges;
 
-  // Signatures
+  // Signatures (2 parties: ผู้จัดทำรายงาน & ตัวแทน Ricoh)
   const prepInput = document.getElementById('reportPreparerInput');
-  const senderInput = document.getElementById('reportSenderInput');
   const receiverInput = document.getElementById('reportReceiverInput');
 
   const sigPrepEl = document.getElementById('rptSigPreparedName');
-  const sigSendEl = document.getElementById('rptSigSenderName');
   const sigRecvEl = document.getElementById('rptSigReceiverName');
 
   if (sigPrepEl) {
     if (prepInput && prepInput.value.trim()) {
       sigPrepEl.textContent = prepInput.value.trim();
     } else {
-      const defaultReturner = records.find(r => r.returner && r.returner.trim() !== '-' && r.returner.trim() !== '')?.returner;
-      sigPrepEl.textContent = defaultReturner || '...................................................';
-    }
-  }
-
-  if (sigSendEl) {
-    if (senderInput && senderInput.value.trim()) {
-      sigSendEl.textContent = senderInput.value.trim();
-    } else {
-      sigSendEl.textContent = '...................................................';
+      // ปล่อยว่างเป็นจุดไข่ปลาไว้ให้เขียนด้วยลายมือ
+      sigPrepEl.textContent = '...................................................';
     }
   }
 

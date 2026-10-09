@@ -752,14 +752,11 @@
             </div>
 
             <div class="report-filter-row" style="border-top: 1px dashed var(--border-subtle); padding-top: 0.6rem;">
-              <label><i class="fa-solid fa-file-signature"></i> ผู้จัดทำรายงาน:</label>
-              <input type="text" id="reportPreparerInput" placeholder="ระบุชื่อผู้จัดทำ (หรือเว้นว่างเพื่อเซ็นสด)" style="flex: 1; min-width: 160px;">
-
-              <label><i class="fa-solid fa-user-pen"></i> ผู้ส่งมอบ:</label>
-              <input type="text" id="reportSenderInput" placeholder="ระบุชื่อผู้ส่งมอบ (หรือเว้นว่างเพื่อเซ็นสด)" style="flex: 1; min-width: 160px;">
+              <label><i class="fa-solid fa-file-signature"></i> ผู้จัดทำรายงาน / ผู้รวบรวม:</label>
+              <input type="text" id="reportPreparerInput" placeholder="ระบุชื่อ (หรือเว้นว่างไว้เพื่อเขียนด้วยลายมือ)" style="flex: 1; min-width: 180px;">
 
               <label><i class="fa-solid fa-user-check"></i> ตัวแทน Ricoh ผู้รับมอบ:</label>
-              <input type="text" id="reportReceiverInput" placeholder="ระบุชื่อตัวแทน Ricoh (หรือเว้นว่างเพื่อเซ็นสด)" style="flex: 1; min-width: 160px;">
+              <input type="text" id="reportReceiverInput" placeholder="ระบุชื่อตัวแทน Ricoh (หรือเว้นว่างเพื่อเซ็นสด)" style="flex: 1; min-width: 180px;">
             </div>
 
             <div class="report-actions-row">
@@ -885,21 +882,13 @@
                 * ข้าพเจ้าขอรับรองว่าได้ดำเนินการตรวจสอบและส่งมอบ-รับมอบตลับหมึกเครื่องพิมพ์ Ricoh ที่ใช้แล้วตามรายละเอียดในเอกสารฉบับนี้ถูกต้องครบถ้วนสมบูรณ์ทุกประการ
               </div>
 
-              <!-- 3-Column Signatures -->
+              <!-- 2-Column Signatures -->
               <div class="report-signatures-grid">
                 <div class="report-sig-box">
                   <div class="report-sig-title">ผู้จัดทำรายงาน / ผู้รวบรวม</div>
                   <div class="report-sig-line"></div>
                   <div class="report-sig-name">( <span id="rptSigPreparedName">...................................................</span> )</div>
                   <div class="report-sig-title">เจ้าหน้าที่ผู้รับผิดชอบ</div>
-                  <div class="report-sig-date">วันที่ ......./......./...........</div>
-                </div>
-
-                <div class="report-sig-box">
-                  <div class="report-sig-title">ผู้มีอำนาจลงนามส่งมอบ</div>
-                  <div class="report-sig-line"></div>
-                  <div class="report-sig-name">( <span id="rptSigSenderName">...................................................</span> )</div>
-                  <div class="report-sig-title">หัวหน้าแผนก / ผู้ส่งมอบ</div>
                   <div class="report-sig-date">วันที่ ......./......./...........</div>
                 </div>
 
