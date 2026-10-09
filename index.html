@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ระบบบันทึกการส่งคืนหมึก Ricoh | Toner Return Management</title>
   
   <!-- PWA & Meta Tags -->
@@ -22,7 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body class="theme-dark">
   <div class="app-layout">
@@ -236,10 +236,9 @@
                       <div class="color-badge cyan-badge">C</div>
                       <span class="color-name">Cyan (สีฟ้า)</span>
                     </div>
-                    <div class="color-counter">
-                      <button type="button" class="btn-step" onclick="stepColor('cyan', -1)"><i class="fa-solid fa-minus"></i></button>
-                      <input type="number" id="inputCyan" class="counter-input" min="0" max="99" value="0">
-                      <button type="button" class="btn-step" onclick="stepColor('cyan', 1)"><i class="fa-solid fa-plus"></i></button>
+                    <div class="color-direct-input-box">
+                      <input type="number" id="inputCyan" class="color-typing-input" inputmode="numeric" pattern="[0-9]*" min="0" max="99" value="0" placeholder="0">
+                      <span class="unit-label">ตลับ</span>
                     </div>
                     <div class="quick-chips">
                       <button type="button" class="chip" onclick="setColorVal('cyan', 1)">+1</button>
@@ -253,12 +252,11 @@
                   <div class="color-input-card magenta-card" id="magentaInputCard">
                     <div class="color-card-top">
                       <div class="color-badge magenta-badge">M</div>
-                      <span class="color-name">Magenta (สีชมพู/แดง)</span>
+                      <span class="color-name">Magenta (ชมพู/แดง)</span>
                     </div>
-                    <div class="color-counter">
-                      <button type="button" class="btn-step" onclick="stepColor('magenta', -1)"><i class="fa-solid fa-minus"></i></button>
-                      <input type="number" id="inputMagenta" class="counter-input" min="0" max="99" value="0">
-                      <button type="button" class="btn-step" onclick="stepColor('magenta', 1)"><i class="fa-solid fa-plus"></i></button>
+                    <div class="color-direct-input-box">
+                      <input type="number" id="inputMagenta" class="color-typing-input" inputmode="numeric" pattern="[0-9]*" min="0" max="99" value="0" placeholder="0">
+                      <span class="unit-label">ตลับ</span>
                     </div>
                     <div class="quick-chips">
                       <button type="button" class="chip" onclick="setColorVal('magenta', 1)">+1</button>
@@ -274,10 +272,9 @@
                       <div class="color-badge yellow-badge">Y</div>
                       <span class="color-name">Yellow (สีเหลือง)</span>
                     </div>
-                    <div class="color-counter">
-                      <button type="button" class="btn-step" onclick="stepColor('yellow', -1)"><i class="fa-solid fa-minus"></i></button>
-                      <input type="number" id="inputYellow" class="counter-input" min="0" max="99" value="0">
-                      <button type="button" class="btn-step" onclick="stepColor('yellow', 1)"><i class="fa-solid fa-plus"></i></button>
+                    <div class="color-direct-input-box">
+                      <input type="number" id="inputYellow" class="color-typing-input" inputmode="numeric" pattern="[0-9]*" min="0" max="99" value="0" placeholder="0">
+                      <span class="unit-label">ตลับ</span>
                     </div>
                     <div class="quick-chips">
                       <button type="button" class="chip" onclick="setColorVal('yellow', 1)">+1</button>
@@ -293,10 +290,9 @@
                       <div class="color-badge black-badge">K</div>
                       <span class="color-name">Black (สีดำ)</span>
                     </div>
-                    <div class="color-counter">
-                      <button type="button" class="btn-step" onclick="stepColor('black', -1)"><i class="fa-solid fa-minus"></i></button>
-                      <input type="number" id="inputBlack" class="counter-input" min="0" max="99" value="0">
-                      <button type="button" class="btn-step" onclick="stepColor('black', 1)"><i class="fa-solid fa-plus"></i></button>
+                    <div class="color-direct-input-box">
+                      <input type="number" id="inputBlack" class="color-typing-input" inputmode="numeric" pattern="[0-9]*" min="0" max="99" value="0" placeholder="0">
+                      <span class="unit-label">ตลับ</span>
                     </div>
                     <div class="quick-chips">
                       <button type="button" class="chip" onclick="setColorVal('black', 1)">+1</button>
@@ -469,8 +465,8 @@
             </div>
           </div>
 
-          <!-- History Table -->
-          <div class="table-responsive">
+          <!-- Desktop Table View (Hidden on mobile <= 768px) -->
+          <div class="table-responsive history-table-desktop">
             <table class="data-table" id="historyTable">
               <thead>
                 <tr>
@@ -493,6 +489,11 @@
                 <!-- Rows injected via JS -->
               </tbody>
             </table>
+          </div>
+
+          <!-- Mobile Card View (Displayed on screens <= 768px) -->
+          <div class="mobile-history-cards" id="mobileHistoryCards">
+            <!-- Mobile Cards injected via JS -->
           </div>
 
           <div class="table-footer-bar">
@@ -914,6 +915,29 @@
       </div>
     </div>
 
+    <!-- Mobile Bottom Navigation Bar (Fixed bottom on screens <= 768px) -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
+      <button class="bottom-nav-item active" data-tab="tab-record" id="mBtnTabRecord">
+        <div class="nav-icon-wrapper">
+          <i class="fa-solid fa-circle-plus"></i>
+        </div>
+        <span class="nav-label">คืนหมึก</span>
+      </button>
+      <button class="bottom-nav-item" data-tab="tab-history" id="mBtnTabHistory">
+        <div class="nav-icon-wrapper">
+          <i class="fa-solid fa-list-check"></i>
+          <span class="bottom-badge" id="mHistoryCountBadge">0</span>
+        </div>
+        <span class="nav-label">ประวัติ</span>
+      </button>
+      <button class="bottom-nav-item" data-tab="tab-analytics" id="mBtnTabAnalytics">
+        <div class="nav-icon-wrapper">
+          <i class="fa-solid fa-chart-pie"></i>
+        </div>
+        <span class="nav-label">สรุปยอด</span>
+      </button>
+    </nav>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast">
       <i class="fa-solid fa-circle-check toast-icon"></i>
@@ -923,6 +947,6 @@
   </div>
 
   <script src="machines.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>

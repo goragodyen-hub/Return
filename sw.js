@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ricoh-toner-pwa-v1';
+const CACHE_NAME = 'ricoh-toner-pwa-v2';
 const STATIC_ASSETS = [
   './',
   './index.html',

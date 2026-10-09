@@ -308,20 +308,28 @@ function resetCmykInputs() {
 // Navigation & Tabs
 // --------------------------------------------------------------------------
 function setupEventListeners() {
-  // Nav tabs
-  const tabs = document.querySelectorAll('.nav-tab');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  // Nav tabs (Desktop top nav + Mobile bottom nav)
+  function switchTab(targetId) {
+    document.querySelectorAll('.nav-tab').forEach(t => {
+      t.classList.toggle('active', t.getAttribute('data-tab') === targetId);
+    });
+    document.querySelectorAll('.bottom-nav-item').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-tab') === targetId);
+    });
+    document.querySelectorAll('.tab-pane').forEach(p => {
+      p.classList.toggle('active', p.id === targetId);
+    });
 
-      tab.classList.add('active');
-      const targetId = tab.getAttribute('data-tab');
-      document.getElementById(targetId).classList.add('active');
+    if (targetId === 'tab-analytics') {
+      renderAnalytics();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
-      if (targetId === 'tab-analytics') {
-        renderAnalytics();
-      }
+  document.querySelectorAll('.nav-tab, .bottom-nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-tab');
+      if (targetId) switchTab(targetId);
     });
   });
 
@@ -935,11 +943,15 @@ function updateStats() {
   document.getElementById('statTxCount').innerHTML = `${returnRecords.length} <span class="unit">รายการ</span>`;
 
   document.getElementById('historyCountBadge').textContent = returnRecords.length;
+  const mBadge = document.getElementById('mHistoryCountBadge');
+  if (mBadge) mBadge.textContent = returnRecords.length;
 }
 
 function renderHistoryTable() {
   const tbody = document.getElementById('historyTableBody');
+  const mContainer = document.getElementById('mobileHistoryCards');
   tbody.innerHTML = '';
+  if (mContainer) mContainer.innerHTML = '';
 
   const filtered = returnRecords.filter(r => {
     // Keyword filter
@@ -969,10 +981,19 @@ function renderHistoryTable() {
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="13" class="text-center" style="padding: 2.5rem; color: var(--text-dim);">ไม่พบข้อมูลรายการคืนหมึกที่ตรงตามเงื่อนไข</td></tr>`;
+    if (mContainer) {
+      mContainer.innerHTML = `
+        <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-dim); background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border-subtle);">
+          <i class="fa-solid fa-inbox" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+          <p>ไม่พบข้อมูลรายการคืนหมึกที่ตรงตามเงื่อนไข</p>
+        </div>
+      `;
+    }
     return;
   }
 
   filtered.forEach((r, idx) => {
+    // 1. Desktop Table Row
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${idx + 1}</td>
@@ -999,6 +1020,46 @@ function renderHistoryTable() {
       </td>
     `;
     tbody.appendChild(tr);
+
+    // 2. Mobile Card Item
+    if (mContainer) {
+      const card = document.createElement('div');
+      card.className = 'm-history-card';
+      card.innerHTML = `
+        <div class="m-card-top">
+          <span class="m-card-id">${r.id}</span>
+          <span class="m-card-date"><i class="fa-regular fa-calendar"></i> ${r.returnDate}</span>
+        </div>
+        <div class="m-card-machine-row">
+          <div class="m-card-serial">${r.serial}</div>
+          <div class="m-card-room-model">
+            <span><i class="fa-solid fa-location-dot" style="color: var(--ricoh-red);"></i> ${r.room}</span>
+            <span>•</span>
+            <span><i class="fa-solid fa-print"></i> ${r.model}</span>
+          </div>
+        </div>
+        <div class="m-card-cmyk-grid">
+          ${r.c > 0 ? `<span class="m-cmyk-pill pill-c">C: ${r.c}</span>` : ''}
+          ${r.m > 0 ? `<span class="m-cmyk-pill pill-m">M: ${r.m}</span>` : ''}
+          ${r.y > 0 ? `<span class="m-cmyk-pill pill-y">Y: ${r.y}</span>` : ''}
+          ${r.k > 0 ? `<span class="m-cmyk-pill pill-k">K: ${r.k}</span>` : ''}
+          <span class="m-cmyk-pill pill-total">รวม ${r.total} ตลับ</span>
+        </div>
+        <div class="m-card-meta-row">
+          <div><i class="fa-regular fa-user"></i> ผู้ส่ง: <strong>${r.returner || '-'}</strong></div>
+          <div><i class="fa-regular fa-comment"></i> หมายเหตุ: <strong>${r.notes || '-'}</strong></div>
+        </div>
+        <div class="m-card-actions">
+          <button class="btn btn-secondary btn-sm" onclick="openPrintModal('${r.id}')">
+            <i class="fa-solid fa-print"></i> พิมพ์สลิป
+          </button>
+          <button class="btn btn-danger-soft btn-sm" onclick="deleteRecord('${r.id}')">
+            <i class="fa-solid fa-trash-can"></i> ลบรายการ
+          </button>
+        </div>
+      `;
+      mContainer.appendChild(card);
+    }
   });
 }
 
